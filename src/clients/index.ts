@@ -2,12 +2,16 @@ import type { ClientConfig } from "@/lib/types";
 import modeloArquitetura from "./modelo-arquitetura";
 import modeloPersonal from "./modelo-personal";
 import modeloSolar from "./modelo-solar";
+import jsEnergiaSolar from "./js-energia-solar";
+import metaSun from "./meta-sun";
 // @imports (o comando "npm run novo-cliente" adiciona novos clientes aqui)
 
 export const clients: ClientConfig[] = [
   modeloSolar,
   modeloArquitetura,
   modeloPersonal,
+  metaSun,
+  jsEnergiaSolar,
   // @lista
 ];
 

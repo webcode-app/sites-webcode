@@ -55,3 +55,19 @@ export function splitHighlight(text: string) {
 export function instagramUrl(handle: string) {
   return `https://instagram.com/${handle.replace(/^@/, "")}`;
 }
+
+/**
+ * Para fotos do Unsplash: gera versões em vários tamanhos (o celular baixa a pequena).
+ * Para outras URLs devolve só a original.
+ */
+export function imgSet(url: string, widths = [640, 960, 1400, 1920]) {
+  if (!/images\.unsplash\.com/.test(url)) return { src: url };
+  const at = (w: number) => {
+    const u = new URL(url);
+    u.searchParams.set("w", String(w));
+    u.searchParams.set("auto", "format");
+    if (!u.searchParams.has("q")) u.searchParams.set("q", "70");
+    return u.toString();
+  };
+  return { src: at(widths[Math.floor(widths.length / 2)]), srcSet: widths.map((w) => `${at(w)} ${w}w`).join(", ") };
+}

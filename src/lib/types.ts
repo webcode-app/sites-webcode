@@ -107,4 +107,19 @@ export interface ClientConfig {
   };
 
   faq?: { q: string; a: string }[];
+
+  /**
+   * Variações visuais para cada cliente não ficar com a mesma cara.
+   * Tudo opcional: sem preencher, usa o padrão (noite + lado + sora + redondo).
+   */
+  design?: {
+    /** "noite" = fundo escuro premium · "dia" = fundo claro e leve */
+    theme?: "noite" | "dia";
+    /** "lado" = título e simulador lado a lado · "centro" = título centralizado com foto grande e simulador numa seção própria */
+    hero?: "lado" | "centro";
+    /** Fonte dos títulos: "sora" (geométrica), "jakarta" (amigável), "grotesk" (técnica) */
+    font?: "sora" | "jakarta" | "grotesk";
+    /** "redondo" = cantos bem arredondados · "reto" = cantos mais secos, visual mais sóbrio */
+    corners?: "redondo" | "reto";
+  };
 }

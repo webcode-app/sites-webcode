@@ -7,6 +7,10 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-cormorant), ui-serif, Georgia, serif;
   --font-display: var(--font-oswald), ui-sans-serif, system-ui, sans-serif;
+  /* Cores de tema (usadas pelo template solar: noite/dia) */
+  --color-fg: var(--fg, #fff);
+  --color-surface: var(--surface, #0b1120);
+  --color-page: var(--bg, #060914);
 }
 
 html {
@@ -127,7 +131,7 @@ section[id] {
 
 /* Grade de fundo com fade. */
 .fx-grid {
-  background-image: linear-gradient(rgb(255 255 255 / 0.06) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-image: linear-gradient(color-mix(in oklab, var(--fg, #fff) 7%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab, var(--fg, #fff) 7%, transparent) 1px, transparent 1px);
   background-size: 56px 56px;
   -webkit-mask: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 70%);
   mask: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 70%);
@@ -144,7 +148,7 @@ section[id] {
 }
 
 /* Slider da calculadora. */
-.fx-range { -webkit-appearance: none; appearance: none; height: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--primary) var(--pct), rgb(255 255 255 / 0.12) var(--pct)); outline: none; cursor: pointer; }
+.fx-range { -webkit-appearance: none; appearance: none; height: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--primary) var(--pct), color-mix(in oklab, var(--fg, #fff) 12%, transparent) var(--pct)); outline: none; cursor: pointer; }
 .fx-range::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; border-radius: 999px; background: #fff; border: 6px solid var(--primary); box-shadow: 0 0 0 6px color-mix(in oklab, var(--primary) 30%, transparent), 0 6px 20px rgb(0 0 0 / 0.4); transition: transform 0.15s; }
 .fx-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 999px; background: #fff; border: 6px solid var(--primary); box-shadow: 0 0 0 6px color-mix(in oklab, var(--primary) 30%, transparent); }
 .fx-range:active::-webkit-slider-thumb { transform: scale(1.15); }
@@ -161,3 +165,6 @@ section[id] {
 }
 
 .font-display-solar { font-family: var(--font-sora), var(--font-inter), ui-sans-serif, system-ui, sans-serif; }
+
+/* Cantos "reto": deixa os arredondados grandes mais secos (pílulas e círculos continuam redondos). */
+.fx-sharp :is(.rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-\[28px\], .rounded-\[32px\], .rounded-\[36px\]) { border-radius: 0.5rem; }

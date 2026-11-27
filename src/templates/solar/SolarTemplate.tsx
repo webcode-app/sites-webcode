@@ -1,5 +1,5 @@
 import { ArrowRight, ArrowUpRight, Check, Clock, Mail, MapPin, Phone, Sparkles } from "lucide-react";
-import { Sora } from "next/font/google";
+import { Plus_Jakarta_Sans, Sora, Space_Grotesk } from "next/font/google";
 import type { CSSProperties, ReactNode } from "react";
 import { MotionProvider } from "@/components/fx/MotionProvider";
 import { Parallax } from "@/components/fx/Parallax";
@@ -17,9 +17,19 @@ import type { ClientConfig } from "@/lib/types";
 import { imgSet, instagramUrl, mapsLink, splitHighlight, whatsappLink } from "@/lib/utils";
 import { SolarCalculator } from "./SolarCalculator";
 
-const sora = Sora({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-sora" });
+// Fontes de título (uma por cliente, escolhida em design.font). Só a usada é baixada.
+const sora = Sora({ subsets: ["latin"], weight: ["600", "700"], preload: false });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["600", "700", "800"], preload: false });
+const grotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", "700"], preload: false });
+const fonts = { sora, jakarta, grotesk };
 
-const BG = "#060914";
+const themes = {
+  noite: { "--bg": "#060914", "--fg": "#ffffff", "--surface": "#0b1120" },
+  dia: { "--bg": "#f7f5f0", "--fg": "#141a2a", "--surface": "#ffffff" },
+};
+
+const BG = "var(--bg)";
+const bgAlpha = (pct: number) => `color-mix(in oklab, var(--bg) ${pct}%, transparent)`;
 const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
 const i = (n: number) => ({ "--i": n }) as CSSProperties;
 
@@ -39,19 +49,27 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
     ["Contato", "#contato"],
   ];
   const heroImg = c.hero.image ? imgSet(c.hero.image) : undefined;
+  const theme = c.design?.theme ?? "noite";
+  const centered = c.design?.hero === "centro";
+  const font = fonts[c.design?.font ?? "sora"];
+  const rootStyle = { ...themes[theme], "--font-sora": font.style.fontFamily, background: BG } as unknown as CSSProperties;
+  // Botão principal: se o texto fala em "simular", leva ao simulador; senão, ao WhatsApp.
+  const ctaLabel = c.hero.ctaLabel ?? "Quero meu orçamento";
+  const ctaToSim = /simul/i.test(ctaLabel);
+  const cta = ctaToSim ? { href: "#simulador" } : { href: wa, target: "_blank", rel: "noreferrer" };
 
   return (
     <MotionProvider>
-      <div className={`${sora.variable} overflow-x-clip text-white antialiased`} style={{ background: BG }}>
+      <div className={`overflow-x-clip text-fg antialiased ${c.design?.corners === "reto" ? "fx-sharp" : ""}`} style={rootStyle}>
         {/* Cabeçalho flutuante de vidro */}
         <ScrollHeader className="sticky top-0 z-40 px-3 pt-3">
-          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between rounded-2xl px-3 pl-4 transition-all duration-500 group-data-[scrolled=true]/header:bg-slate-950/70 group-data-[scrolled=true]/header:shadow-lg group-data-[scrolled=true]/header:shadow-black/30 group-data-[scrolled=true]/header:ring-1 group-data-[scrolled=true]/header:ring-white/10 group-data-[scrolled=true]/header:backdrop-blur-xl">
+          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between rounded-2xl px-3 pl-4 transition-all duration-500 group-data-[scrolled=true]/header:bg-surface/70 group-data-[scrolled=true]/header:shadow-lg group-data-[scrolled=true]/header:shadow-black/10 group-data-[scrolled=true]/header:ring-1 group-data-[scrolled=true]/header:ring-fg/10 group-data-[scrolled=true]/header:backdrop-blur-xl">
             <a href="#" className="[&_span]:text-[15px]">
-              <Logo client={c} textClassName="text-white" />
+              <Logo client={c} textClassName="text-fg" />
             </a>
-            <nav className="hidden items-center gap-1 text-sm text-white/70 lg:flex">
+            <nav className="hidden items-center gap-1 text-sm text-fg/70 lg:flex">
               {nav.map(([l, h]) => (
-                <a key={h} href={h} className="rounded-full px-3.5 py-2 transition hover:bg-white/10 hover:text-white">
+                <a key={h} href={h} className="rounded-full px-3.5 py-2 transition hover:bg-fg/10 hover:text-fg">
                   {l}
                 </a>
               ))}
@@ -71,20 +89,20 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
         {/* Hero */}
         <section className="relative -mt-[68px] overflow-hidden pt-[68px]">
           <div aria-hidden className="absolute inset-0">
-            {heroImg && (
+            {heroImg && !centered && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 {...heroImg}
                 sizes="100vw"
                 alt=""
                 fetchPriority="high"
-                className="fx-kenburns absolute inset-0 size-full object-cover opacity-40"
+                className={`fx-kenburns absolute inset-0 size-full object-cover ${theme === "dia" ? "opacity-25" : "opacity-40"}`}
               />
             )}
-            <div className="absolute inset-0" style={{ background: `linear-gradient(100deg, ${BG} 15%, ${BG}cc 50%, ${BG}66)` }} />
+            <div className="absolute inset-0" style={{ background: `linear-gradient(100deg, ${BG} 15%, ${bgAlpha(80)} 50%, ${bgAlpha(40)})` }} />
             <div className="fx-grid absolute inset-0" />
             {/* Sol: brilho + raios girando */}
-            <div className="absolute -top-40 -right-40 size-[620px] md:-top-56 md:-right-24 md:size-[820px]">
+            <div className={`absolute size-[620px] md:size-[820px] ${centered ? "-top-[420px] left-1/2 -translate-x-1/2 md:-top-[520px]" : "-top-40 -right-40 md:-top-56 md:-right-24"}`}>
               <div className="fx-float absolute inset-0 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_55%,transparent)_0%,color-mix(in_oklab,var(--primary)_18%,transparent)_35%,transparent_65%)]" />
               <div
                 className="fx-spin absolute inset-0 rounded-full opacity-25 [--t:90s]"
@@ -98,47 +116,45 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
             <div className="absolute inset-x-0 bottom-0 h-40" style={{ background: `linear-gradient(to top, ${BG}, transparent)` }} />
           </div>
 
-          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pt-12 pb-24 md:pt-20 md:pb-32 lg:grid-cols-[1.15fr_1fr]">
+          <div className={centered ? "relative mx-auto max-w-4xl px-5 pt-14 text-center md:pt-24" : "relative mx-auto grid max-w-6xl items-center gap-12 px-5 pt-12 pb-24 md:pt-20 md:pb-32 lg:grid-cols-[1.15fr_1fr]"}>
             <div>
               <a
                 href="#avaliacoes"
-                className="fx-in inline-flex items-center gap-2.5 rounded-full bg-white/[.06] py-1.5 pr-4 pl-1.5 text-sm ring-1 ring-white/15 backdrop-blur"
+                className="fx-in inline-flex items-center gap-2.5 rounded-full bg-fg/[.06] py-1.5 pr-4 pl-1.5 text-sm ring-1 ring-fg/15 backdrop-blur"
               >
                 <span className="grid size-7 place-items-center rounded-full bg-white">
                   <GoogleG size={16} />
                 </span>
                 <Stars rating={c.reviews.rating} size={13} />
-                <span className="text-white/80">
-                  <strong className="text-white">{c.reviews.rating.toFixed(1).replace(".", ",")}</strong> · {c.reviews.count} avaliações
+                <span className="text-fg/80">
+                  <strong className="text-fg">{c.reviews.rating.toFixed(1).replace(".", ",")}</strong> · {c.reviews.count} avaliações
                 </span>
               </a>
 
-              <h1 className="font-display-solar mt-7 text-[2.6rem] leading-[1.04] font-bold tracking-[-0.03em] sm:text-6xl lg:text-[4.1rem]">
+              <h1 className="font-display-solar mt-7 text-balance text-[2.6rem] leading-[1.04] font-bold tracking-[-0.03em] sm:text-6xl lg:text-[4.1rem]">
                 <AnimatedTitle text={c.hero.title} />
               </h1>
-              <p className="fx-in mt-6 max-w-xl text-lg leading-relaxed text-white/65" style={d(0.5)}>
+              <p className={`fx-in mt-6 max-w-xl text-lg leading-relaxed text-fg/65 ${centered ? "mx-auto" : ""}`} style={d(0.5)}>
                 {c.hero.subtitle}
               </p>
 
-              <div className="fx-in mt-8 flex flex-wrap items-center gap-3" style={d(0.6)}>
+              <div className={`fx-in mt-8 flex flex-wrap items-center gap-3 ${centered ? "justify-center" : ""}`} style={d(0.6)}>
                 <a
-                  href={wa}
-                  target="_blank"
-                  rel="noreferrer"
+                  {...cta}
                   className="fx-sheen group inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-4 font-bold text-on-primary shadow-[0_14px_50px_-12px_var(--primary)]"
                 >
-                  {c.hero.ctaLabel ?? "Quero meu orçamento"}
+                  {ctaLabel}
                   <ArrowRight size={18} className="transition group-hover:translate-x-1" />
                 </a>
-                <a href="#como-funciona" className="rounded-2xl px-5 py-4 font-semibold text-white/80 ring-1 ring-white/15 transition hover:bg-white/5 hover:text-white">
+                <a href="#como-funciona" className="rounded-2xl px-5 py-4 font-semibold text-fg/80 ring-1 ring-fg/15 transition hover:bg-fg/5 hover:text-fg">
                   Como funciona
                 </a>
               </div>
 
               {c.hero.badges && (
-                <ul className="mt-9 grid gap-x-6 gap-y-3 text-[15px] text-white/80 sm:grid-cols-2">
+                <ul className={centered ? "mt-9 flex flex-wrap justify-center gap-2.5 text-sm text-fg/80" : "mt-9 grid gap-x-6 gap-y-3 text-[15px] text-fg/80 sm:grid-cols-2"}>
                   {c.hero.badges.map((b, n) => (
-                    <li key={b} className="fx-in flex items-center gap-2.5" style={d(0.7 + n * 0.08)}>
+                    <li key={b} className={`fx-in flex items-center gap-2.5 ${centered ? "rounded-full bg-fg/[.05] py-1.5 pr-3.5 pl-1.5 ring-1 ring-fg/10" : ""}`} style={d(0.7 + n * 0.08)}>
                       <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary/20 text-primary ring-1 ring-primary/40">
                         <Check size={12} strokeWidth={3} />
                       </span>
@@ -148,22 +164,61 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
                 </ul>
               )}
             </div>
-            <SolarCalculator client={c} />
+            {!centered && <SolarCalculator client={c} />}
           </div>
+
+          {/* Hero "centro": foto grande em janela, com selos de vidro flutuando */}
+          {centered && (
+            <div className="fx-in relative mx-auto mt-14 max-w-6xl px-5 pb-20" style={d(0.8)}>
+              <Parallax className="aspect-[4/3] rounded-[32px] shadow-2xl shadow-black/20 ring-1 ring-fg/10 sm:aspect-[16/9] lg:aspect-[21/9]" amount={40}>
+                <div className="size-full bg-[linear-gradient(135deg,var(--primary),#0f172a)]">
+                  {heroImg && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img {...heroImg} sizes="(min-width:1152px) 1152px, 100vw" alt="" fetchPriority="high" className="size-full object-cover" />
+                  )}
+                </div>
+              </Parallax>
+              {[
+                { icon: <GoogleG size={18} />, value: `${c.reviews.rating.toFixed(1).replace(".", ",")} no Google`, label: `${c.reviews.count} avaliações` },
+                ...(c.hero.badges?.[2] ? [{ icon: <Check size={18} strokeWidth={3} />, value: c.hero.badges[2], label: c.business.name }] : []),
+              ].map((chip, n) => (
+                <div
+                  key={n}
+                  className={`fx-float absolute flex items-center gap-3 rounded-2xl bg-surface/75 px-4 py-3 shadow-xl shadow-black/10 ring-1 ring-fg/10 backdrop-blur-xl [--t:9s] ${n === 0 ? "top-6 left-8 md:top-10 md:left-12" : "right-8 bottom-24 md:right-12 md:bottom-28"}`}
+                >
+                  <span className={`grid size-10 place-items-center rounded-xl ${n === 0 ? "bg-white ring-1 ring-black/5" : "bg-primary/15 text-primary"}`}>{chip.icon}</span>
+                  <span>
+                    <strong className="font-display-solar block leading-tight">{chip.value}</strong>
+                    <span className="text-xs text-fg/60">{chip.label}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Números em faixa de vidro */}
         {c.stats && (
           <section className="relative z-10 mx-auto -mt-12 max-w-6xl px-5">
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl bg-white/10 ring-1 ring-white/10 backdrop-blur-md md:grid-cols-4">
+            <div className={`grid gap-px overflow-hidden rounded-3xl bg-fg/10 ring-1 ring-fg/10 backdrop-blur-md ${statCols(c.stats.length)}`}>
               {c.stats.map((s, n) => (
-                <div key={s.label} className="fx-reveal relative bg-[#0a0f1f]/85 px-5 py-7 text-center" style={i(n)}>
-                  <div className="font-display-solar bg-gradient-to-b from-white to-white/60 bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-[2.6rem]">
+                <div key={s.label} className="fx-reveal relative bg-surface/85 px-5 py-7 text-center" style={i(n)}>
+                  <div className="font-display-solar bg-gradient-to-b from-fg to-fg/60 bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-[2.6rem]">
                     <Ticker value={s.value} />
                   </div>
-                  <div className="mt-1.5 text-sm text-white/55">{s.label}</div>
+                  <div className="mt-1.5 text-sm text-fg/55">{s.label}</div>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Hero "centro": simulador ganha uma seção própria, em formato largo */}
+        {centered && (
+          <section className="relative mx-auto max-w-6xl px-5 pt-24 md:pt-32">
+            <SectionTitle eyebrow="Simulador" title="Descubra quanto você vai economizar" />
+            <div className="mt-12">
+              <SolarCalculator client={c} layout="wide" />
             </div>
           </section>
         )}
@@ -213,7 +268,7 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
                         </span>
                         <div>
                           <h3 className="font-display-solar text-lg font-semibold">{s.title}</h3>
-                          <p className="mt-2 leading-relaxed text-white/60">{s.description}</p>
+                          <p className="mt-2 leading-relaxed text-fg/60">{s.description}</p>
                         </div>
                       </li>
                     ))}
@@ -227,7 +282,7 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
         {c.about && (
           <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-24 md:py-32 lg:grid-cols-2 lg:gap-16">
             <div className="fx-reveal relative">
-              <Parallax className="aspect-[4/5] rounded-[32px] ring-1 ring-white/10 sm:aspect-[4/3] lg:aspect-[4/5]" amount={50}>
+              <Parallax className="aspect-[4/5] rounded-[32px] ring-1 ring-fg/10 sm:aspect-[4/3] lg:aspect-[4/5]" amount={50}>
                 <div className="size-full bg-[linear-gradient(135deg,var(--primary),#0f172a)]">
                   {c.about.image && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -236,7 +291,7 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
                 </div>
               </Parallax>
               {/* selo de vidro sobre a foto */}
-              <div className="absolute right-4 bottom-4 left-4 flex items-center gap-4 rounded-2xl bg-slate-950/60 p-4 ring-1 ring-white/15 backdrop-blur-xl sm:right-auto sm:left-6 sm:bottom-6">
+              <div className="absolute right-4 bottom-4 left-4 flex items-center gap-4 rounded-2xl bg-surface/60 p-4 ring-1 ring-fg/15 backdrop-blur-xl sm:right-auto sm:left-6 sm:bottom-6">
                 <span className="grid size-12 place-items-center rounded-xl bg-white">
                   <GoogleG size={26} />
                 </span>
@@ -245,17 +300,17 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
                     <strong className="font-display-solar text-xl">{c.reviews.rating.toFixed(1).replace(".", ",")}</strong>
                     <Stars rating={c.reviews.rating} size={14} />
                   </div>
-                  <p className="text-sm text-white/60">{c.reviews.count} clientes avaliaram</p>
+                  <p className="text-sm text-fg/60">{c.reviews.count} clientes avaliaram</p>
                 </div>
               </div>
             </div>
             <div>
               <SectionTitle eyebrow="Quem somos" title={c.about.title ?? `Sobre a ${c.business.name}`} left />
-              <p className="fx-reveal mt-6 text-lg leading-relaxed whitespace-pre-line text-white/65">{c.about.text}</p>
+              <p className="fx-reveal mt-6 text-lg leading-relaxed whitespace-pre-line text-fg/65">{c.about.text}</p>
               {c.about.highlights && (
                 <ul className="mt-8 space-y-3">
                   {c.about.highlights.map((h, n) => (
-                    <li key={h} className="fx-reveal flex items-center gap-3 rounded-2xl bg-white/[.04] px-4 py-3.5 ring-1 ring-white/10" style={i(n)}>
+                    <li key={h} className="fx-reveal flex items-center gap-3 rounded-2xl bg-fg/[.04] px-4 py-3.5 ring-1 ring-fg/10" style={i(n)}>
                       <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/20 text-primary">
                         <Check size={15} strokeWidth={3} />
                       </span>
@@ -279,14 +334,14 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
                 {c.gallery.map((g, n) => (
                   <figure
                     key={n}
-                    className={`fx-reveal group relative aspect-[4/5] w-[78%] shrink-0 snap-center overflow-hidden rounded-3xl ring-1 ring-white/10 md:aspect-auto md:w-auto ${galleryShape(n, c.gallery!.length)}`}
+                    className={`fx-reveal group relative aspect-[4/5] w-[78%] shrink-0 snap-center overflow-hidden rounded-3xl ring-1 ring-fg/10 md:aspect-auto md:w-auto ${galleryShape(n, c.gallery!.length)}`}
                     style={{ ...i(n % 3), background: `linear-gradient(${135 + n * 30}deg,#1e293b,var(--primary))` }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img {...imgSet(g.image, [480, 800, 1200])} sizes="(min-width:768px) 33vw, 80vw" alt={g.caption ?? ""} loading="lazy" className="size-full object-cover transition duration-700 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                     {g.caption && (
-                      <figcaption className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-medium ring-1 ring-white/15 backdrop-blur-md md:translate-y-2 md:opacity-90 md:transition md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                      <figcaption className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur-md md:translate-y-2 md:opacity-90 md:transition md:group-hover:translate-y-0 md:group-hover:opacity-100">
                         {g.caption}
                         <ArrowUpRight size={16} className="shrink-0 text-primary" />
                       </figcaption>
@@ -306,7 +361,7 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
               href={c.reviews.googleUrl ?? "#"}
               target="_blank"
               rel="noreferrer"
-              className="fx-reveal flex items-center gap-4 rounded-2xl bg-white/[.05] px-5 py-4 ring-1 ring-white/10 transition hover:bg-white/10"
+              className="fx-reveal flex items-center gap-4 rounded-2xl bg-fg/[.05] px-5 py-4 ring-1 ring-fg/10 transition hover:bg-fg/10"
             >
               <span className="grid size-11 place-items-center rounded-xl bg-white">
                 <GoogleG size={24} />
@@ -316,7 +371,7 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
                   <strong className="font-display-solar text-2xl">{c.reviews.rating.toFixed(1).replace(".", ",")}</strong>
                   <Stars rating={c.reviews.rating} size={16} />
                 </span>
-                <span className="text-sm text-white/55">{c.reviews.count} avaliações no Google</span>
+                <span className="text-sm text-fg/55">{c.reviews.count} avaliações no Google</span>
               </span>
             </a>
           </div>
@@ -324,19 +379,19 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
             <div className="fx-marquee flex w-max gap-4 px-2 [--t:45s]">
               {[0, 1].map((copy) =>
                 repeatTo(c.reviews.items, 6).map((r, n) => (
-                  <figure key={`${copy}-${n}`} aria-hidden={copy === 1 || undefined} className="flex w-[300px] shrink-0 flex-col rounded-3xl bg-white/[.04] p-6 ring-1 ring-white/10 sm:w-[360px]">
+                  <figure key={`${copy}-${n}`} aria-hidden={copy === 1 || undefined} className="flex w-[300px] shrink-0 flex-col rounded-3xl bg-fg/[.04] p-6 ring-1 ring-fg/10 sm:w-[360px]">
                     <div className="flex items-center justify-between">
                       <Stars rating={r.rating} size={15} />
                       <GoogleG size={16} />
                     </div>
-                    <blockquote className="mt-4 flex-1 leading-relaxed text-white/80">“{r.text}”</blockquote>
+                    <blockquote className="mt-4 flex-1 leading-relaxed text-fg/80">“{r.text}”</blockquote>
                     <figcaption className="mt-5 flex items-center gap-3">
                       <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-primary to-primary/40 font-bold text-on-primary">
                         {r.author[0]}
                       </span>
                       <span>
                         <span className="block font-semibold">{r.author}</span>
-                        {r.date && <span className="text-sm text-white/45">{r.date}</span>}
+                        {r.date && <span className="text-sm text-fg/45">{r.date}</span>}
                       </span>
                     </figcaption>
                   </figure>
@@ -353,14 +408,14 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
               <SectionTitle eyebrow="Dúvidas" title="Perguntas frequentes" />
               <div className="mt-12 space-y-3">
                 {c.faq.map((f, n) => (
-                  <details key={n} className="fx-details fx-reveal group rounded-2xl bg-white/[.04] px-6 ring-1 ring-white/10 transition open:bg-white/[.07] open:ring-primary/30" style={i(n)}>
+                  <details key={n} className="fx-details fx-reveal group rounded-2xl bg-fg/[.04] px-6 ring-1 ring-fg/10 transition open:bg-fg/[.07] open:ring-primary/30" style={i(n)}>
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-lg font-semibold [&::-webkit-details-marker]:hidden">
                       {f.q}
-                      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-xl leading-none transition duration-300 group-open:rotate-45 group-open:bg-primary group-open:text-on-primary">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-fg/10 text-xl leading-none transition duration-300 group-open:rotate-45 group-open:bg-primary group-open:text-on-primary">
                         +
                       </span>
                     </summary>
-                    <p className="pb-6 leading-relaxed text-white/65">{f.a}</p>
+                    <p className="pb-6 leading-relaxed text-fg/65">{f.a}</p>
                   </details>
                 ))}
               </div>
@@ -370,8 +425,8 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
 
         {/* CTA final com sol nascendo */}
         <section className="px-5 py-16">
-          <div className="fx-reveal relative mx-auto max-w-6xl overflow-hidden rounded-[36px] px-6 py-20 text-center ring-1 ring-white/10 md:px-16 md:py-24">
-            <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-white/[.06] to-transparent" />
+          <div className="fx-reveal relative mx-auto max-w-6xl overflow-hidden rounded-[36px] px-6 py-20 text-center ring-1 ring-fg/10 md:px-16 md:py-24">
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-fg/[.06] to-transparent" />
             <div aria-hidden className="absolute -bottom-[340px] left-1/2 size-[640px] -translate-x-1/2 md:-bottom-[520px] md:size-[960px]">
               <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_70%,transparent)_0%,color-mix(in_oklab,var(--primary)_25%,transparent)_40%,transparent_68%)]" />
               <div className="absolute inset-[30%] rounded-full border border-primary/40 shadow-[0_0_80px_var(--primary)]" />
@@ -381,7 +436,7 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
               <h2 className="font-display-solar mx-auto max-w-3xl text-3xl leading-tight font-bold tracking-tight md:text-5xl">
                 Pare de pagar caro na conta de luz. <span className="fx-shine">Fale com a gente hoje.</span>
               </h2>
-              <p className="mx-auto mt-5 max-w-xl text-white/65">Orçamento sem compromisso, com simulação de economia e opções de financiamento.</p>
+              <p className="mx-auto mt-5 max-w-xl text-fg/65">Orçamento sem compromisso, com simulação de economia e opções de financiamento.</p>
               <a
                 href={wa}
                 target="_blank"
@@ -405,18 +460,18 @@ export function SolarTemplate({ client: c }: { client: ClientConfig }) {
               {c.contact.hours && <Info icon={<Clock />}>{c.contact.hours.join("\n")}</Info>}
             </div>
           </div>
-          <div className="fx-reveal min-h-80 overflow-hidden rounded-3xl ring-1 ring-white/10 [&_iframe]:min-h-80 [&_iframe]:[filter:invert(.92)_hue-rotate(180deg)_saturate(.7)]">
+          <div className={`fx-reveal min-h-80 overflow-hidden rounded-3xl ring-1 ring-fg/10 [&_iframe]:min-h-80 ${theme === "noite" ? "[&_iframe]:[filter:invert(.92)_hue-rotate(180deg)_saturate(.7)]" : ""}`}>
             <MapEmbed client={c} />
           </div>
         </section>
 
-        <footer className="border-t border-white/10 py-10 text-white/50">
+        <footer className="border-t border-fg/10 py-10 text-fg/50">
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 text-sm md:flex-row">
-            <Logo client={c} textClassName="text-white" />
+            <Logo client={c} textClassName="text-fg" />
             <p>{c.business.tagline}</p>
             <div className="flex gap-4">
               {c.contact.instagram && (
-                <a href={instagramUrl(c.contact.instagram)} className="hover:text-white">
+                <a href={instagramUrl(c.contact.instagram)} className="hover:text-fg">
                   @{c.contact.instagram}
                 </a>
               )}
@@ -436,10 +491,10 @@ function AnimatedTitle({ text }: { text: string }) {
     <>
       {splitHighlight(text).flatMap((part, p) =>
         part.text
-          .split(/(\s+)/)
+          .split(/( +)/) // só espaço comum: use espaço "duro" (\u00a0) para não quebrar "R$ 69"
           .filter(Boolean)
           .map((w, k) =>
-            /^\s+$/.test(w) ? (
+            /^ +$/.test(w) ? (
               <span key={`${p}-${k}`}> </span>
             ) : (
               <span key={`${p}-${k}`} className="fx-word" style={d(0.08 + n++ * 0.05)}>
@@ -475,7 +530,7 @@ function bento(count: number): Slot[] {
 function ServiceCard({ s, wide, n }: { s: ClientConfig["services"][number]; wide: boolean; n: number }) {
   return (
     <Spotlight
-      className={`fx-reveal group overflow-hidden rounded-3xl bg-white/[.035] p-7 ring-1 ring-white/10 transition duration-500 hover:ring-primary/40 ${wide ? "lg:col-span-2" : ""}`}
+      className={`fx-reveal group overflow-hidden rounded-3xl bg-fg/[.035] p-7 ring-1 ring-fg/10 transition duration-500 hover:ring-primary/40 ${wide ? "lg:col-span-2" : ""}`}
       style={i(n % 3)}
     >
       {wide && (
@@ -490,7 +545,7 @@ function ServiceCard({ s, wide, n }: { s: ClientConfig["services"][number]; wide
         <Icon name={s.icon} size={22} />
       </span>
       <h3 className="font-display-solar relative mt-8 text-xl font-semibold">{s.title}</h3>
-      <p className={`relative mt-2 leading-relaxed text-white/60 ${wide ? "max-w-md" : ""}`}>{s.description}</p>
+      <p className={`relative mt-2 leading-relaxed text-fg/60 ${wide ? "max-w-md" : ""}`}>{s.description}</p>
     </Spotlight>
   );
 }
@@ -502,7 +557,7 @@ function SectionTitle({ eyebrow, title, left }: { eyebrow: string; title: string
         <span className="size-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
         {eyebrow}
       </p>
-      <h2 className="font-display-solar mt-4 bg-gradient-to-b from-white to-white/65 bg-clip-text text-3xl leading-tight font-bold tracking-[-0.02em] text-transparent md:text-5xl">
+      <h2 className="font-display-solar mt-4 bg-gradient-to-b from-fg to-fg/65 bg-clip-text text-3xl leading-tight font-bold tracking-[-0.02em] text-transparent md:text-5xl">
         {title}
       </h2>
     </div>
@@ -522,12 +577,12 @@ function Info({ icon, children, href }: { icon: ReactNode; children: ReactNode; 
   const body = (
     <>
       <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/25 [&>svg]:size-5">{icon}</span>
-      <span className="pt-2.5 whitespace-pre-line text-white/75">{children}</span>
+      <span className="pt-2.5 whitespace-pre-line text-fg/75">{children}</span>
     </>
   );
   const cls = "fx-reveal flex gap-4 rounded-2xl p-2 transition";
   return href ? (
-    <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className={`${cls} hover:bg-white/5`}>
+    <a href={href} target={href.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className={`${cls} hover:bg-fg/5`}>
       {body}
     </a>
   ) : (
@@ -542,6 +597,10 @@ function galleryShape(n: number, total: number) {
   const missing = (3 - (cells % 3)) % 3; // quantas fotos precisam ficar largas para fechar a grade
   const wide = missing === 2 ? n === 3 || n === total - 1 : missing === 1 && n === total - 1;
   return wide ? "md:col-span-2" : "";
+}
+
+function statCols(n: number) {
+  return n <= 2 ? "grid-cols-2" : n === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4";
 }
 
 function repeatTo<T>(items: T[], min: number): T[] {

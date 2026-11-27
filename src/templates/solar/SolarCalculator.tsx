@@ -29,7 +29,8 @@ function Money({ value, className = "" }: { value: number; className?: string })
   );
 }
 
-export function SolarCalculator({ client }: { client: ClientConfig }) {
+export function SolarCalculator({ client, layout = "card" }: { client: ClientConfig; layout?: "card" | "wide" }) {
+  const wide = layout === "wide";
   const tariff = client.solarCalculator?.tariff ?? 0.95;
   const sunHours = client.solarCalculator?.sunHours ?? 5;
   const [bill, setBill] = useState(450);
@@ -45,12 +46,13 @@ export function SolarCalculator({ client }: { client: ClientConfig }) {
   const message = `Olá! Simulei no site: minha conta de luz é de ${brl(bill)} por mês. Quero um orçamento de energia solar.`;
 
   return (
-    <div className="fx-beam fx-in rounded-[28px] [--d:.35s]">
-      <div className="relative overflow-hidden rounded-[28px] bg-slate-900/70 p-6 text-white shadow-2xl shadow-black/50 ring-1 ring-white/10 backdrop-blur-xl sm:p-8">
+    <div id="simulador" className={`fx-beam rounded-[28px] ${wide ? "fx-reveal" : "fx-in [--d:.35s]"}`}>
+      <div className={`relative overflow-hidden rounded-[28px] bg-surface/70 p-6 text-fg shadow-2xl shadow-black/30 ring-1 ring-fg/10 backdrop-blur-xl ${wide ? "sm:p-10" : "sm:p-8"}`}>
         {/* brilho interno */}
         <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 size-64 rounded-full bg-[radial-gradient(circle,color-mix(in_oklab,var(--primary)_45%,transparent),transparent_70%)]" />
 
-        <div className="relative">
+        <div className={wide ? "relative grid gap-8 md:grid-cols-2 md:items-center md:gap-14" : "relative"}>
+          <div>
           <p className="inline-flex items-center gap-2 text-xs font-semibold tracking-[.18em] text-primary uppercase">
             <span className="relative flex size-2">
               <span className="fx-ring absolute inset-0 rounded-full bg-primary" />
@@ -58,13 +60,13 @@ export function SolarCalculator({ client }: { client: ClientConfig }) {
             </span>
             Simulador de economia
           </p>
-          <label htmlFor="bill" className="mt-3 block text-xl font-semibold text-white/90">
+          <label htmlFor="bill" className="mt-3 block text-xl font-semibold text-fg/90">
             Quanto você paga de luz por mês?
           </label>
 
           <div className="mt-4 flex items-end justify-between gap-3">
             <Money value={bill} className="font-display-solar text-5xl font-bold tracking-tight" />
-            <span className="pb-2 text-xs text-white/45">arraste ↔</span>
+            <span className="pb-2 text-xs text-fg/45">arraste ↔</span>
           </div>
           <input
             id="bill"
@@ -80,11 +82,13 @@ export function SolarCalculator({ client }: { client: ClientConfig }) {
 
           {/* antes x depois */}
           <div className="mt-7 space-y-3">
-            <Bar label="Conta hoje" value={bill} width={30 + (pct * 0.7)} tone="bg-white/25" />
+            <Bar label="Conta hoje" value={bill} width={30 + (pct * 0.7)} tone="bg-fg/25" />
             <Bar label="Com energia solar" value={after} width={(30 + pct * 0.7) * 0.1} tone="bg-gradient-to-r from-primary to-[color-mix(in_oklab,var(--primary),white_35%)]" />
           </div>
+          </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-2.5 text-center">
+          <div>
+          <div className={`grid grid-cols-3 gap-2.5 text-center ${wide ? "" : "mt-6"}`} >
             <Result label="Economia por ano" strong>
               <Money value={yearly} />
             </Result>
@@ -100,9 +104,10 @@ export function SolarCalculator({ client }: { client: ClientConfig }) {
           >
             <WhatsAppIcon size={20} /> Receber orçamento grátis
           </a>
-          <p className="mt-3 text-center text-xs text-white/45">
+          <p className="mt-3 text-center text-xs text-fg/45">
             Estimativa de até 90% de economia. O valor final depende da visita técnica.
           </p>
+          </div>
         </div>
       </div>
     </div>
@@ -113,10 +118,10 @@ function Bar({ label, value, width, tone }: { label: string; value: number; widt
   return (
     <div>
       <div className="flex justify-between text-sm">
-        <span className="text-white/60">{label}</span>
+        <span className="text-fg/60">{label}</span>
         <Money value={value} className="font-semibold" />
       </div>
-      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/5">
+      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-fg/5">
         <div className={`h-full rounded-full transition-[width] duration-500 ease-out ${tone}`} style={{ width: `${width}%` }} />
       </div>
     </div>
@@ -125,9 +130,9 @@ function Bar({ label, value, width, tone }: { label: string; value: number; widt
 
 function Result({ label, children, strong }: { label: string; children: React.ReactNode; strong?: boolean }) {
   return (
-    <div className={`rounded-2xl p-3 ring-1 ${strong ? "bg-primary/15 ring-primary/30" : "bg-white/[.04] ring-white/10"}`}>
+    <div className={`rounded-2xl p-3 ring-1 ${strong ? "bg-primary/15 ring-primary/30" : "bg-fg/[.04] ring-fg/10"}`}>
       <div className={`text-[15px] font-bold sm:text-lg ${strong ? "text-primary" : ""}`}>{children}</div>
-      <div className="mt-0.5 text-[11px] leading-tight text-white/50">{label}</div>
+      <div className="mt-0.5 text-[11px] leading-tight text-fg/50">{label}</div>
     </div>
   );
 }
